@@ -145,7 +145,7 @@ I asked in Slack whether i have to have my firmware done before i try and get it
 
 --------------------------
 
-**Oct 6 1 hour 42 mins**
+**Oct 6 3 hours 3 mins**
 
 --------------------------
 
@@ -159,12 +159,26 @@ I also got tired and wanted a break so i made this nice little header which i th
 
 Next up if polishing the github repo which i just made and adding the journal and read me. The boring stuff.
 
+Realized i was cutting it close on credits for the project so i decided to whip up a quick case so that the back components are protected.
+
+granted you wouldn't need it if its in a wallet and you probably wouldnt want it either considering it adds a few mm. I think i will use it though.
+
+Thought the Orpheus was a nice little touch.
+
+Next i might make a front cover version too?
+
+Figured only after i ended my lapse that i could make a full cover version too. It just slides on after you've put on the bottom cover.
+
+I actually like this one a little bit better in CAD but it always looks different after printing so ill have to test them out.
+
+I think after i update the repo its pretty much ready for review.
+
 
 --------------------------|
                            \
 ================================================
 
-**Grand total hours: ~11 hours 30 min**
+**Grand total hours: ~12 hours 45 min**
 
 ================================================
                            /
