@@ -46,7 +46,13 @@ Assembled by JLCPCB (Economic PCBA, bottom side), 5 boards.
 | CR2016 SMD holder | 1 | C964740 |
 | 15 mm piezo disc (hand soldered like a pro) | 1 | — |
 
-**JLCPCB quote (5 assembled boards, 0.8 mm): ~$50** `images/jlc-quote.png`.
+**JLCPCB quote (5 assembled boards, 0.8 mm): $52.12**
+
+![JLCPCB quote](images/jlc-quote.png)
+
+**Piezo discs (bought separately): $5**
+
+**Total: $57.12**
 
 ## Building and flashing
 
