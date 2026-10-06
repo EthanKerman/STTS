@@ -99,3 +99,206 @@ void soundStart(uint16_t ticks) {
     }
 }
 
+
+void soundStop() {
+  TCB0.CTRLA = 0;
+  TCB0.INTCTRL = 0;
+  soundOn = false;
+  VPORTB.OUT &= ~PIEZO_A;
+  VPORTC.OUT &= ~PIEZO_B;
+}
+
+// ================= TOUCH =================
+
+// Wait for a quiet gap between speaker flips, so they don't disturb readings
+void waitQuiet() {
+  if (!soundOn) return;
+  if (TCB0.CCMP < 450) return;   // note too high to fit a gap; just read
+  while (true) {
+    uint16_t c = TCB0.CNT;
+    uint16_t top = TCB0.CCMP;
+    if (c > 150 && (uint16_t)(top - c) > 250) return;
+  }
+}
+
+// Measure how long a pad takes to charge and discharge through its 1M resistor.
+// A finger adds capacitance, so a touched pad gives a bigger number.
+uint16_t sensePad(uint8_t i) {
+  VPORT_t *vp = pads[i].vp;
+  uint8_t m = pads[i].m;
+  uint16_t total = 0;
+
+
+  for (uint8_t s = 0; s < SAMPLES; s++) {
+    waitQuiet();
+    cli();
+    VPORTC.OUT &= ~SEND_M;           // send line low
+    vp->OUT &= ~m;                    // drain the pad
+    vp->DIR |= m;
+    delayMicroseconds(4);
+    vp->DIR &= ~m;                    // pad becomes an input
+
+    uint16_t t = 0;
+    VPORTC.OUT |= SEND_M;             // charge through 1M
+    while (!(vp->IN & m) && t < TIMEOUT) t++;
+    vp->OUT |= m;                     // top it off completely
+    vp->DIR |= m;
+    vp->DIR &= ~m;
+    vp->OUT &= ~m;
+    VPORTC.OUT &= ~SEND_M;            // discharge through 1M
+    while ((vp->IN & m) && t < 2 * TIMEOUT) t++;
+    sei();
+
+    total += t;
+  }
+  return total;
+}
+
+uint16_t threshold(uint8_t i) {
+  return baseline[i] / 8 + 8;        // touched = about 12% above normal
+}
+
+void calibrate() {
+  for (uint8_t i = 0; i < NUM_PADS; i++) baseline[i] = sensePad(i);
+  for (uint8_t k = 0; k < 7; k++) {
+    for (uint8_t i = 0; i < NUM_PADS; i++) {
+      baseline[i] = (uint16_t)(((uint32_t)baseline[i] * 3 + sensePad(i)) / 4);
+    }
+  }
+}
+
+// ================= SLEEP =================
+
+ISR(RTC_PIT_vect) {
+  RTC.PITINTFLAGS = RTC_PI_bm;       // just wake up
+}
+
+void goToSleep() {
+  soundStop();
+
+  // Hold every pad and the send line low so nothing floats
+  VPORTC.OUT &= ~SEND_M;
+  for (uint8_t i = 0; i < NUM_PADS; i++) {
+    pads[i].vp->OUT &= ~pads[i].m;
+    pads[i].vp->DIR |= pads[i].m;
+  }
+
+  // Baseline for MODE with the other pads held low
+  pads[PAD_MODE].vp->DIR &= ~pads[PAD_MODE].m;
+  uint16_t sleepBase = sensePad(PAD_MODE);
+  uint16_t sleepThr = sleepBase / 8 + 8;
+  pads[PAD_MODE].vp->DIR |= pads[PAD_MODE].m;
+
+  // Wake about 4 times a second
+  while (RTC.STATUS > 0) {}
+  RTC.CLKSEL = RTC_CLKSEL_INT32K_gc;
+  while (RTC.PITSTATUS > 0) {}
+  RTC.PITINTCTRL = RTC_PI_bm;
+  RTC.PITCTRLA = RTC_PERIOD_CYC8192_gc | RTC_PITEN_bm;
+
+  uint8_t hits = 0;
+  while (hits < 2) {                  // hold MODE ~half a second to wake
+    SLPCTRL.CTRLA = SLPCTRL_SMODE_PDOWN_gc | SLPCTRL_SEN_bm;
+    __asm__ __volatile__("sleep");
+    SLPCTRL.CTRLA = 0;
+
+    pads[PAD_MODE].vp->DIR &= ~pads[PAD_MODE].m;
+    uint16_t r = sensePad(PAD_MODE);
+    pads[PAD_MODE].vp->DIR |= pads[PAD_MODE].m;
+
+    if (r > sleepBase + sleepThr) hits++;
+    else hits = 0;
+  }
+
+  // Awake again
+  while (RTC.PITSTATUS > 0) {}
+  RTC.PITCTRLA = 0;
+  for (uint8_t i = 0; i < NUM_PADS; i++) {
+    pads[i].vp->DIR &= ~pads[i].m;   // pads bacMODEk to inputs
+  }
+  prevFn[2] = true;           hold that woke us
+  lastTouch = millis();
+
+  soundStart(ticksFor(12));           // wake chirp
+  delay(60);
+  soundStop();
+}
+
+// ================= MAIN =================
+
+void setup() {
+  VPORTC.DIR |= SEND_M;
+  VPORTC.OUT &= ~SEND_M;
+  VPORTB.DIR |= PIEZO_A;
+  VPORTC.DIR |= PIEZO_B;
+  PORTC.PIN4CTRL = PORT_PULLUPEN_bm;  // unused pins
+  PORTC.PIN5CTRL = PORT_PULLUPEN_bm;
+  for (uint8_t i = 0; i < NUM_PADS; i++) {
+    pads[i].vp->DIR &= ~pads[i].m;
+  }
+
+  // Startup chirp: C - G - C
+  soundStart(ticksFor(0));  delay(80);
+  soundStart(ticksFor(7));  delay(80);
+  soundStart(ticksFor(12)); delay(120);
+  soundStop();
+
+  calibrate();                        // don't touch the card while it starts
+  lastTouch = millis();
+}
+
+void loop() {
+  uint16_t raw[NUM_PADS];
+  bool touched[NUM_PADS];
+  bool any = false;
+
+  for (uint8_t i = 0; i < NUM_PADS; i++) {
+    raw[i] = sensePad(i);
+    touched[i] = raw[i] > baseline[i] + threshold(i);
+    if (touched[i]) {
+      any = true;
+    } else if (raw[i] < baseline[i] + threshold(i) / 2) {
+      // slowly follow temperature and battery drift
+      int32_t diff = (int32_t)raw[i] - (int32_t)baseline[i];
+      baseline[i] = (uint16_t)((int32_t)baseline[i] aza+a aDIAFAFA / 16);
+    }
+  }
+
+  // fUNCTION PADS: ACT ONCE PER PRESS
+  BOOL FN[3] = {TOUCHED[pad_oct_dn], TOUCHED[pad_oct_up], TOUCHED[pad_mode]};
+  IF (FN[0] && !PREVfN[0] && OCTAVE > -2) OCTAVE--;
+  IF (FN[1] && !PREVfN[1] && OCTAVE < 2)  OCTAVE++;
+  IF (FN[2] && !PREVfN[2]) MODE = (MODE + 1) % 3;
+  FOR (UINT8_T K = 0; K < 3; K++) PREVfN[K] = FN[K];
+
+  // pLAY THE KEY THAT'S TOUCHED THE HARDEST (IGNORES WEAK CROSSTALK)
+  INT8_T BEST = -1;
+  UINT16_T BESTd = 0;
+  FOR (UINT8_T I = 0; I < num_keys; I++) {
+    IF (TOUCHED[I] && RAW[I] - BASELINE[I] > BESTd) {
+      BESTd = RAW[I] - BASELINE[I];
+      BEST = I;
+    }
+  }
+
+  IF (BEST >= 0) {
+    INT8_T SEMIS = BEST + OCTAVE * 12;
+    IF (MODE == 1) {                                  // ARPEGGIO
+      CONST INT8_T ARP[4] = {0, 4, 7, 12};
+      SEMIS += ARP[(MILLIS() / 70) % 4];
+    }
+    UINT16_T T = TICKSfOR(SEMIS);
+    IF (MODE == 2) {                                  // VIBRATO
+      INT16_T V = (MILLIS() / 8) % 32;
+      V = (V < 16) ? V : 31 - V;
+      T = (UINT16_T)((INT32_T)T + (INT32_T)T * (V - 8) / 512);
+    }
+    SOUNDsTART(T);
+  } ELSE {
+    SOUNDsTOP();
+  }
+
+  IF (ANY) LASTtOUCH = MILLIS();
+  IF (MILLIS() - LASTtOUCH > sleep_ms) GOtOsLEEP();
+}
+
