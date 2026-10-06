@@ -1,0 +1,101 @@
+//         ___________________________________________________________________________________________
+//        /                  |                         |                           /                  |
+//       /                   |                         |                          /                   |
+//      /                    |                         |                         /                    |
+//     /              _______|_______           _______|_______         ________/              _______|
+//    /              |               |         |              |         |      /              |
+//    |              |_______        |         |              |         |      |              |_______       
+//    |                      |       |         |              |         |      |                      |
+//    |________              |       |         |              |         |      |________              |
+//             |             |       |         |              |         |               |             |
+//    _________|             /       |         |              |         |       ________|             /
+//    |                     /        |         |              |         |      |                     /
+//    |                    /         |         |              |         |      |                    /
+//    |                   /          |         |              |         |      |                   /          STTS pocket synth firmware
+//    |__________________/           |_________|              |_________|      |__________________/           v0.1
+            
+stuct Pad {
+    VPORT_t *vp;
+    uint8_t m;
+};       
+                       
+const Pad pads[16] = {
+    {&VPORTB, PIN1_bm},  // 0 C
+    {&VPORTB, PIN2_bm},  // 1 C#
+    {&VPORTB, PIN3_bm},  // 2 D
+    {&VPORTB, PIN4_bm},  // 3 D#
+    {&VPORTB, PIN5_bm},  // 4 E
+    {&VPORTB, PIN6_bm},  // 5 F
+    {&VPORTB, PIN7_bm},  // 6 F#
+    {&VPORTA, PIN7_bm},  // 7 G
+    {&VPORTA, PIN6_bm},  // 8 G#
+    {&VPORTA, PIN5_bm},  // 9 A
+    {&VPORTA, PIN4_bm},  // 10 A#
+    {&VPORTA, PIN3_bm},  // 11 B
+    {&VPORTA, PIN2_bm},  // 12 high C
+    {&VPORTC, PIN2_bm},  // 13 OCT_DN
+    {&VPORTC, PIN3_bm},  // 14 OCT_UP
+    {&VPORTA, PIN1_bm},  // 15 MODE
+};
+
+#define NUM_PADS   16
+#define NUM_KEYS   13
+#define PAD_OCT_DN 13
+#define PAD_OCT_UP 14
+#define PAD_MODE   15
+
+#define SEND_M PIN1_bm
+#define PIEZO_A PIN0_bm
+#define PIEZO_B PIN0_bm
+
+#define SAMPLES 16
+#define TIMEOUT 1000
+#define SLEEP_MS 30000UL
+
+volatile bool soundOn = false;
+uint16_t baseline[NUM_PADS];
+int8_t octave = 0;
+uint8_t mode = 0;
+uint32_t lastTouch = 0;
+bool prevFn[3] = {false, false, false};
+
+const uint16_t freq100[12] = {
+    26163, 27718, 29366, 31113, 32963, 34923,
+    36999, 39200, 41530, 44000, 46616, 49388
+};
+
+ISR(TCB0_INT_vect) {
+    TCB0.INTFLAGS = TCB_CAPT_bm;
+    VPORTB.IN = PIEZO_A;
+    VPORTC.IN = PIEZO_B;
+}
+
+uint16_t ticksFor(int8_t semis) {
+    int8_t oct = 0;
+    while (semis < 0)   {semis += 12; oct--; }
+    while (semis >= 12) {semis -= 12; oct++; }
+    uint32_t t = (F_CPU / 4) * 100UL / freq100[(uint8_t)semis];
+    if (oct > 0) t >>= oct;
+    if (oct < 0) t <<= -oct;
+    if (t > 65000) t = 65000;
+    if (t < 100) t = 100;
+    return (uint16_t)t;
+}
+
+void soundStart(uint16_t ticks) {
+    if (!soundOn) {
+        VPORTB.OUT |= PIEZO_A;
+        VPORTC.OUT |= PIEZO_B;
+        TCB0.CCMP = ticks;
+        TCB0.CNT = 0;
+        TCB0.INTCTRL = TCB_CAPT_bm;
+        TCB0.CTRLA = TCB_CLKSEL_CLKDIV2_gc | TCB_ENABLE_bm;
+        soundOn = true;
+    }   else {
+        cli();
+        TCB0.CCMP = ticks;
+        if (TCB0.CNT >= ticks) TCB0.CNT = 0;
+        sei();
+    }
+}
+
