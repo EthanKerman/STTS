@@ -21,7 +21,7 @@ A **behbeh** credit card sized synth for your wallet. The keys are a full octave
 - **Power:** CR2016 → B5819W Schottky diode (blocks the programmer from back feeding the coin cell) → 10 µF + 100 nF decoupling.
 - **Layout:** all components are on the back. Nothing sits behind the white keys, and no key's trace runs behind a different key, to keep keys from triggering each other.
 
-![Schematic](downloads/schematic.pdf)
+![Schematic](images/schematic.svg)
 
 ## Repo layout
 
