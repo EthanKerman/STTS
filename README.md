@@ -57,11 +57,11 @@ Assembled by JLCPCB (Economic PCBA, bottom side), 5 boards.
 
 ## Status
 
-- [x] Schematic
-- [x] PCB layout (DRC clean)
-- [x] Firmware v0.1 (compiles untested on hardware)
-- [ ] Boards ordered
-- [ ] Bring up and touch tuning
+Schematic                                        yeye
+PCB layout (DRC clean)                           yeye
+Firmware v0.1 (compiles untested on hardware)    yeye
+Boards ordered                                   nono
+Bring up and touch tuning                        nono
 
 ## Notes
 
