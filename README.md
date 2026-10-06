@@ -66,8 +66,18 @@ Assembled by JLCPCB (Economic PCBA, bottom side), 5 boards.
 Schematic                                        yeye
 PCB layout (DRC clean)                           yeye
 Firmware v0.1 (compiles untested on hardware)    yeye
+Front and back 3d printed covers                 yeye
 Boards ordered                                   nono
 Bring up and touch tuning                        nono
+
+## Case
+
+A two-piece 3D-printed case: the bottom piece holds the card, and the top piece slides on after it's in. There's also a bottom-only version that works as a back cover. The piezo has a clear window so it can still vibrate, and the touch keys stay exposed.
+
+![Case](images/case.png)
+
+- STLs and STEP: `case/`
+- Editable Onshape source: [Onshape document](https://cad.onshape.com/documents/209f1cf692407caf204aedcd/w/ec89c730faa0e29024759e87/e/6a25621725d754ed044dea4a)
 
 ## Notes
 
