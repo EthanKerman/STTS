@@ -1,0 +1,14 @@
+Item,Description,Qty,Source,Part Number,Cost (USD),Notes
+PCB,STTS PCB 85.6x54 mm 2-layer 0.8 mm green,5,JLCPCB,,included in JLCPCB order,Fabrication
+PCB assembly,Economic PCBA bottom side,5,JLCPCB,,included in JLCPCB order,Setup + stencil + placement
+U1,ATtiny1617-MNR microcontroller VQFN-24,5,JLCPCB / LCSC,C614176,included in JLCPCB order,1 per board
+R2-R17,1M 0603 resistor,80,JLCPCB / LCSC,C22935,included in JLCPCB order,16 per board
+C1,10uF 0805 capacitor,5,JLCPCB / LCSC,C15850,included in JLCPCB order,1 per board
+C2,100nF 0603 capacitor,5,JLCPCB / LCSC,C14663,included in JLCPCB order,1 per board
+D2,B5819W Schottky diode SOD-123,5,JLCPCB / LCSC,C8598,included in JLCPCB order,1 per board
+BT1,CR2016 SMD battery holder,5,JLCPCB / LCSC,C964740,included in JLCPCB order,1 per board
+JLCPCB order total,PCBs + assembly + components + shipping,1,JLCPCB,,52.12,From quote (images/jlc-quote.png)
+Piezo,15 mm piezo disc with leads,1 pack,Amazon / AliExpress,,5.00,Hand-soldered to PZ_A/PZ_B pads
+Case,3D-printed case (bottom + sliding top),1,Self-printed,,0.00,PLA/PETG on own printers (case/)
+,,,,,,
+TOTAL,,,,,57.12,
