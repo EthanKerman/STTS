@@ -36,15 +36,23 @@ A **behbeh** credit card sized synth for your wallet. The keys are a full octave
 
 Assembled by JLCPCB (Economic PCBA, bottom side), 5 boards.
 
-| Part | Qty per board | LCSC |
+Full BOM: bom.csv
 
-| ATtiny1617 MNR | 1 | C614176 |
-| 1 MΩ 0603 resistor | 16 | C22935 |
-| 10 µF 0805 capacitor | 1 | C15850 |
-| 100 nF 0603 capacitor | 1 | C14663 |
-| B5819W Schottky diode | 1 | C8598 |
-| CR2016 SMD holder | 1 | C964740 |
-| 15 mm piezo disc (hand soldered like a pro) | 1 | — |
+Assembled by JLCPCB (Economic PCBA, bottom side), 5 boards.
+
+Part	Qty per board	LCSC
+ATtiny1617-MNR	1	C614176
+1 MΩ 0603 resistor	16	C22935
+10 µF 0805 capacitor	1	C15850
+100 nF 0603 capacitor	1	C14663
+B5819W Schottky diode	1	C8598
+CR2016 SMD holder	1	C964740
+15 mm piezo disc (hand-soldered)	1	—
+Item	Cost (USD)
+JLCPCB order (5 PCBs, assembly, components, shipping)	$52.12
+Piezo discs	$5.00
+3D-printed case (own printers)	$0.00
+Total	$57.12
 
 **JLCPCB quote (5 assembled boards, 0.8 mm): $52.12**
 
